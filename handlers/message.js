@@ -1,0 +1,30 @@
+import { getOrCreateUser, parseTransaction, insertTransaction, checkBudgets } from "../lib/finance.js";
+import { formatTransaction, formatPercentage, getMainMenuKeyboard } from "../lib/formatter.js";
+import { getCategoryDisplay } from "../lib/categories.js";
+
+export async function handleMessage(ctx) {
+  const text = ctx.message.text;
+  if (text.startsWith("/")) return;
+
+  const user = getOrCreateUser(ctx.from.id, ctx.from.first_name, ctx.from.username);
+  const parsed = parseTransaction(text);
+  if (!parsed) {
+    return ctx.reply(`Try:\n• <code>25000 food dinner</code>\n• <code>income 30000000 salary</code>`, {
+      parse_mode: "HTML", reply_markup: getMainMenuKeyboard()
+    });
+  }
+
+  insertTransaction(user.id, { type: parsed.type, amount: parsed.amount, category: parsed.category, description: parsed.description });
+
+  let warning = "";
+  if (parsed.type === "expense") {
+    const budgets = checkBudgets(user.id);
+    const b = budgets.find(x => x.category === parsed.category);
+    if (b?.status === "exceeded") warning = `\n\n🔴 Budget exceeded for ${b.category}!`;
+    else if (b?.status === "warning") warning = `\n\n🟡 ${formatPercentage(b.percentage)} of ${b.category} budget used.`;
+  }
+
+  await ctx.reply(formatTransaction({ type: parsed.type, amount: parsed.amount, category: getCategoryDisplay(parsed.category, parsed.type), description: parsed.description }) + warning, {
+    parse_mode: "HTML", reply_markup: getMainMenuKeyboard()
+  });
+}

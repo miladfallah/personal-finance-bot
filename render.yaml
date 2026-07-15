@@ -1,0 +1,10 @@
+services:
+  - type: worker
+    name: finance-bot
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
