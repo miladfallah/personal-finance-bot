@@ -3,10 +3,27 @@ import { getMainMenuKeyboard, formatBudgetStatus, formatGoals } from "../lib/for
 
 export async function handleStart(ctx) {
   const user = getOrCreateUser(ctx.from.id, ctx.from.first_name, ctx.from.username);
-  await ctx.reply(
-    `Welcome to <b>Personal Finance Assistant</b> 💰\n\nI'll help you track income and expenses.\n\n<b>Quick Start:</b>\n• Type: <code>25000 food dinner</code>\n• Type: <code>income 30000000 salary</code>\n\nYour currency: <b>${user.currency}</b>`,
-    { parse_mode: "HTML", reply_markup: getMainMenuKeyboard() }
-  );
+  const name = ctx.from.first_name || "کاربر";
+
+  const msg = `╔═══════════════════════════╗
+║  💰 <b>دستیار مالی شخصی</b>
+╚═══════════════════════════╝
+
+سلام <b>${escapeHtml(name)}</b>! 👋
+
+من کمکتون می‌کنم درآمد و هزینه‌هاتون رو پیگیری کنید.
+
+<b>🎯 شروع سریع:</b>
+  • <code>۲۵۰۰۰ غذا شام</code>
+  • <code>درآمد ۳۰۰۰۰۰۰۰ حقوق</code>
+
+<b>📌 دستورات:</b>
+  /budget — مدیریت بودجه
+  /goal — مدیریت اهداف
+
+از دکمه‌های زیر استفاده کنید 👇`;
+
+  await ctx.reply(msg, { parse_mode: "HTML", reply_markup: getMainMenuKeyboard() });
 }
 
 export async function handleBudget(ctx) {
@@ -17,17 +34,17 @@ export async function handleBudget(ctx) {
     const budgets = checkBudgets(user.id);
     return ctx.reply(formatBudgetStatus(budgets), {
       parse_mode: "HTML",
-      reply_markup: { inline_keyboard: [[{ text: "➕ Set Budget", callback_data: "set_budget" }], [{ text: "🔙 Back", callback_data: "main_menu" }]] }
+      reply_markup: { inline_keyboard: [[{ text: "➕ تنظیم بودجه", callback_data: "set_budget" }], [{ text: "🔙 بازگشت", callback_data: "main_menu" }]] }
     });
   }
-  if (parts.length < 2) return ctx.reply("Usage: <code>/budget food 5000000</code>", { parse_mode: "HTML" });
+  if (parts.length < 2) return ctx.reply(" نحوه استفاده: <code>/budget غذا ۵۰۰۰۰۰۰</code>", { parse_mode: "HTML" });
 
   const amount = validateAmount(parts[1]);
-  if (!amount) return ctx.reply("❌ Invalid amount.", { parse_mode: "HTML" });
+  if (!amount) return ctx.reply("❌ مبلغ نامعتبر است.", { parse_mode: "HTML" });
 
   setBudget(user.id, parts[0].toLowerCase(), amount);
-  await ctx.reply(`✅ <b>Budget Set!</b>\n\n📂 ${escapeHtml(parts[0])}\n💰 Limit: <b>${amount.toLocaleString()}</b>`, {
-    parse_mode: "HTML", reply_markup: { inline_keyboard: [[{ text: "🔙 Back", callback_data: "main_menu" }]] }
+  await ctx.reply(`✅ <b>بودجه تنظیم شد!</b>\n\n📂 ${escapeHtml(parts[0])}\n💰 سقف: <b>${amount.toLocaleString("fa-IR")} تومان</b>`, {
+    parse_mode: "HTML", reply_markup: { inline_keyboard: [[{ text: "🔙 بازگشت", callback_data: "main_menu" }]] }
   });
 }
 
@@ -39,16 +56,16 @@ export async function handleGoal(ctx) {
     const goals = getGoals(user.id);
     return ctx.reply(formatGoals(goals), {
       parse_mode: "HTML",
-      reply_markup: { inline_keyboard: [[{ text: "➕ Add Goal", callback_data: "add_goal" }], [{ text: "🔙 Back", callback_data: "main_menu" }]] }
+      reply_markup: { inline_keyboard: [[{ text: "➕ افزودن هدف", callback_data: "add_goal" }], [{ text: "🔙 بازگشت", callback_data: "main_menu" }]] }
     });
   }
-  if (parts.length < 2) return ctx.reply("Usage: <code>/goal car 500000000</code>", { parse_mode: "HTML" });
+  if (parts.length < 2) return ctx.reply("نحوه استفاده: <code>/goal ماشین ۵۰۰۰۰۰۰۰۰</code>", { parse_mode: "HTML" });
 
   const amount = validateAmount(parts[1]);
-  if (!amount) return ctx.reply("❌ Invalid amount.", { parse_mode: "HTML" });
+  if (!amount) return ctx.reply("❌ مبلغ نامعتبر است.", { parse_mode: "HTML" });
 
   createGoal(user.id, parts[0].toLowerCase(), amount);
-  await ctx.reply(`✅ <b>Goal Created!</b>\n\n🎯 ${escapeHtml(parts[0])}\n💰 Target: <b>${amount.toLocaleString()}</b>`, {
-    parse_mode: "HTML", reply_markup: { inline_keyboard: [[{ text: "🔙 Back", callback_data: "main_menu" }]] }
+  await ctx.reply(`✅ <b>هدف ایجاد شد!</b>\n\n🎯 ${escapeHtml(parts[0])}\n💰 هدف: <b>${amount.toLocaleString("fa-IR")} تومان</b>`, {
+    parse_mode: "HTML", reply_markup: { inline_keyboard: [[{ text: "🔙 بازگشت", callback_data: "main_menu" }]] }
   });
 }

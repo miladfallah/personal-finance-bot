@@ -9,9 +9,13 @@ export async function handleMessage(ctx) {
   const user = getOrCreateUser(ctx.from.id, ctx.from.first_name, ctx.from.username);
   const parsed = parseTransaction(text);
   if (!parsed) {
-    return ctx.reply(`Try:\n• <code>25000 food dinner</code>\n• <code>income 30000000 salary</code>`, {
-      parse_mode: "HTML", reply_markup: getMainMenuKeyboard()
-    });
+    return ctx.reply(
+      `💡 <b>نمونه استفاده:</b>\n\n` +
+      `💸 ثبت هزینه:\n<code>۲۵۰۰۰ غذا شام</code>\n\n` +
+      `💰 ثبت درآمد:\n<code>درآمد ۳۰۰۰۰۰۰۰ حقوق</code>\n\n` +
+      `یا از دکمه‌های زیر استفاده کنید 👇`,
+      { parse_mode: "HTML", reply_markup: getMainMenuKeyboard() }
+    );
   }
 
   insertTransaction(user.id, { type: parsed.type, amount: parsed.amount, category: parsed.category, description: parsed.description });
@@ -20,8 +24,8 @@ export async function handleMessage(ctx) {
   if (parsed.type === "expense") {
     const budgets = checkBudgets(user.id);
     const b = budgets.find(x => x.category === parsed.category);
-    if (b?.status === "exceeded") warning = `\n\n🔴 Budget exceeded for ${b.category}!`;
-    else if (b?.status === "warning") warning = `\n\n🟡 ${formatPercentage(b.percentage)} of ${b.category} budget used.`;
+    if (b?.status === "exceeded") warning = `\n\n🔴 <b>هشدار!</b> بودجه ${b.category} تمام شد!`;
+    else if (b?.status === "warning") warning = `\n\n🟡 <b>هشدار:</b> ${formatPercentage(b.percentage)} بودجه ${b.category} مصرف شد.`;
   }
 
   await ctx.reply(formatTransaction({ type: parsed.type, amount: parsed.amount, category: getCategoryDisplay(parsed.category, parsed.type), description: parsed.description }) + warning, {
