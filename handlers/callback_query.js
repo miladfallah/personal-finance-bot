@@ -1,10 +1,11 @@
 import {
   getOrCreateUser, getBalance, getMonthlyReport, checkBudgets,
-  getGoals, setBudget, createGoal, addToGoal, validateAmount, escapeHtml
+  getGoals, setBudget, createGoal, addToGoal, validateAmount, escapeHtml,
+  getRecentTransactions, deleteTransaction
 } from "../lib/finance.js";
 import {
   formatBalance, formatMonthlyReport, formatBudgetStatus, formatGoals,
-  formatAmount, getMainMenuKeyboard
+  formatAmount, getMainMenuKeyboard, formatTransactionsList, getTransactionsKeyboard
 } from "../lib/formatter.js";
 import { EXPENSE_CATEGORIES } from "../lib/categories.js";
 
@@ -72,6 +73,21 @@ export async function handleCallbackQuery(ctx) {
   if (data === "cancel") {
     userStates.delete(user.id);
     return ctx.reply("Cancelled.", { reply_markup: getMainMenuKeyboard() });
+  }
+  if (data === "transactions") {
+    const txs = await getRecentTransactions(user.id);
+    return ctx.reply(formatTransactionsList(txs), { parse_mode: "HTML", reply_markup: getTransactionsKeyboard(txs) });
+  }
+  if (data.startsWith("del_tx_")) {
+    const txId = parseInt(data.replace("del_tx_", ""));
+    const tx = await deleteTransaction(user.id, txId);
+    if (tx) {
+      const icon = tx.type === "income" ? "📈" : "📉";
+      await ctx.reply(`✅ Deleted:\n${icon} <b>${formatAmount(tx.amount)}</b> — ${tx.category}`, { parse_mode: "HTML", reply_markup: getMainMenuKeyboard() });
+    } else {
+      await ctx.reply("❌ Transaction not found.", { reply_markup: getMainMenuKeyboard() });
+    }
+    return;
   }
 }
 
